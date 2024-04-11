@@ -1,11 +1,9 @@
-# MCFICS: Model-based Coverage-guided Fuzzing for Industrial Control System Protocol Implementations
-In this paper, we present MCFICS, a coverage-guided greybox
-fuzzing framework that uses (1) active model learning for stochastic reactive systems to infer the state machine of the underlying stateful ICS protocol implementations, and (2) guided fuzzing to explore the state space using this learned state machine. During fuzzing, new input sequences that increase code coverage are used to refine the state machine model of the ICS protocol implementations. Refinement helps to further explore deeper states or paths to increase coverage of the overall state space of the ICS protocol implementation under test. We implemented and tested MCFICS with two example server implementations of IEC 60870-5-104 (IEC104) SCADA protocol
-[Link To Paper]()
+# Automata Learning Fuzzer for Industrial Control Protocols
+
 ### Preresiquite
 **System:**
 ```bash
-sudo apt-get update && sudo apt get install python3 python3-pip python3-venv
+sudo apt-get update && sudo apt get install python3 python3-pip python3-venv libpcap-dev libpq-dev graphviz-dev clang
 ```
 *Additionally: * MCFICS requires afl-gcc or afl-clang to build target for instrumentation and collecting code coverage. To install the program yourself you need to following the depencies and afl instrumentation guide provided by [AFL++](https://github.com/AFLplusplus/AFLplusplus)
 ## Installation (Tested on Ubuntu 22.04 & 20.04 & 18.04 & 16.04)
@@ -96,6 +94,13 @@ Restart options:
 cd <path-mcfics>
 python -m FMI -pj new_project -hs 127.0.0.1 -p 2404 -pt tcp --fuzzer MIFuzzer --name iec104 --pcap FMI/data/iec104/combined.pcap --seed 123456 --restart afl_fork "./FMI/c_SUT/cs104_server_no_threads"  --budget 10000000
 ```
+
+## Paper Published from this Repo
+
+* MCFICS: Model-based Coverage-guided Fuzzing for Industrial Control System Protocol Implementations
+
+* ALF: Automata Learning Fuzzer for Industrial Control System Protocol Implementations
+
 ## Acknowledgement 
 We would like to the following code repository, this project will not be possible with this code base.
 
@@ -108,3 +113,4 @@ We would like to the following code repository, this project will not be possibl
 
 * **Uchenna Ezeobi** (uezeobi@uccs.edu, uchenna.ezeobi3@gmail.com)
 * **Dr. Gedare Bloom** (gbloom@uccs.edu)
+
