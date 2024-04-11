@@ -1,45 +1,110 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+# MCFICS: Model-based Coverage-guided Fuzzing for Industrial Control System Protocol Implementations
+In this paper, we present MCFICS, a coverage-guided greybox
+fuzzing framework that uses (1) active model learning for stochastic reactive systems to infer the state machine of the underlying stateful ICS protocol implementations, and (2) guided fuzzing to explore the state space using this learned state machine. During fuzzing, new input sequences that increase code coverage are used to refine the state machine model of the ICS protocol implementations. Refinement helps to further explore deeper states or paths to increase coverage of the overall state space of the ICS protocol implementation under test. We implemented and tested MCFICS with two example server implementations of IEC 60870-5-104 (IEC104) SCADA protocol
+[Link To Paper]()
+### Preresiquite
+**System:**
+```bash
+sudo apt-get update && sudo apt get install python3 python3-pip python3-venv
+```
+*Additionally: * MCFICS requires afl-gcc or afl-clang to build target for instrumentation and collecting code coverage. To install the program yourself you need to following the depencies and afl instrumentation guide provided by [AFL++](https://github.com/AFLplusplus/AFLplusplus)
+## Installation (Tested on Ubuntu 22.04 & 20.04 & 18.04 & 16.04)
+1. Install [AFL++](https://github.com/AFLplusplus/AFLplusplus)
+2. Install MCFICS
+```bash
+git clone --recursive <the-current-repo> # clone
+cd automata-learning-fuzzer             # workdir
+python3 -m venv env                     # Creat virtual environment
+source env/bin/activate                 # Activate virtual environment
+unzip netzob                            # unzip version of netzob that works for our experiment, pip install netzob does not work
+cd netzob/netzob                         # Install Netzob manually
+pip install pylstar numpy               # Install dependencies for Netzob
+python setup.py install
+cd ../..                                # Move to the top tree folder       
+pip install -r requirements.txt         # Install other libraries
+```
+You should have a working version of both afl++ and MCFICS
+We need to compile the [lib60870](https://github.com/mz-automation/lib60870) which is located in the IEC104 folder
+```bash
+cd IEC104/lib60870/lib60870-C/
+```
+**Prepare Instrumentation**
+We will replace the C compiler with AFL++ toolchain compiler, you can use afl-clang, afl-clang-fast, afl-gcc or afl-gcc-fast to compile the code
+```bash
+echo "CC=<path-to-afl>/afl-clang-fast" >> make/target_system.mk                     # Use afl-clang-fast to compile the code
+echo "CFLAGS += -fsanitize=address,undefined" >> make/target_system.mk                        # Add address sanitizer
+make -j<N CPU>
+```
+You now have a working instrumentation, next step is to compile the test harness.
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+**Test Harness**
+```bash
+cd examples/cs104_server_no_threads
+make -j<N CPU>
+```
+This gives a compiled server example
+## Usage
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+```bash
+python -m FMI --help
 
----
+usage: __main__.py [-h] [-pj PROJECT] [-hs HOST] [-p PORT] [-pt {tcp,udp,tcp+tls}]
+                   [-st SEND_TIMEOUT] [-rt RECV_TIMEOUT] --fuzzer {MIFuzzer}
+                   [--name NAME] [--debug] --pcap PCAP [--seed SEED]
+                   [--budget TIME_BUDGET] [--output OUTPUT] [--shm_id SHM_ID]
+                   [--dump_shm] [--restart module_name [args ...]]
+                   [--restart-sleep RESTART_SLEEP_TIME]
+ Industrial Control Fuzzing Approach by Uchenna Ezeobi
 
-## Edit a file
+optional arguments:
+  -h, --help            show this help message and exit
+  -pj PROJECT, --project PROJECT
+                        project to create
+  -hs HOST, --host HOST
+                        target host
+  -p PORT, --port PORT  target port
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+Connection options:
+  -pt {tcp,udp,tcp+tls}, --protocol {tcp,udp,tcp+tls}
+                        transport protocol
+  -st SEND_TIMEOUT, --send_timeout SEND_TIMEOUT
+                        send() timeout
+  -rt RECV_TIMEOUT, --recv_timeout RECV_TIMEOUT
+                        recv() timeout
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+Fuzzer options:
+  --fuzzer {MIFuzzer}   application layer fuzzer
+  --name NAME           Name of the protocol you are fuzzing
+  --debug               enable debug.csv
+  --pcap PCAP           example communicaion between client and server
+  --seed SEED           prng seed
+  --budget TIME_BUDGET  time budget
+  --output OUTPUT       output dir
+  --shm_id SHM_ID       custom shared memory id overwrite
+  --dump_shm            dump shm after run
 
----
+Restart options:
+  --restart module_name [args ...]
+                        Restarter Modules:
+                          afl_fork: '<executable> [<argument> ...]' (Pass command and arguments within quotes, as only one argument)
+  --restart-sleep RESTART_SLEEP_TIME
+                        Set sleep seconds after a crash before continue (Default 5)
 
-## Create a file
+```
+**Run the example server for IEC104**
+```bash
+cd <path-mcfics>
+python -m FMI -pj new_project -hs 127.0.0.1 -p 2404 -pt tcp --fuzzer MIFuzzer --name iec104 --pcap FMI/data/iec104/combined.pcap --seed 123456 --restart afl_fork "./FMI/c_SUT/cs104_server_no_threads"  --budget 10000000
+```
+## Acknowledgement 
+We would like to the following code repository, this project will not be possible with this code base.
 
-Next, you’ll add a new file to this repository.
+* An Active Automata Learning Library: [AALPY](https://github.com/DES-Lab/AALpy)
+* Evolutionary Protocol Fuzzer: [EPF](https://github.com/fkie-cad/epf)
+* Network Protocol Fuzzing for Humans [BooFuzz](https://github.com/jtpereyda/boofuzz)
+* Coverage-guided parallel fuzzer [Manul](https://github.com/mxmssh/manul)
+* Protocol Reverse Engineering, Modeling and Fuzzing [Netzob](https://github.com/netzob/netzob/tree/master)
+## Owner of Repo 
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
-
----
-
-## Clone a repository
-
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
-
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
-
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+* **Uchenna Ezeobi** (uezeobi@uccs.edu, uchenna.ezeobi3@gmail.com)
+* **Dr. Gedare Bloom** (gbloom@uccs.edu)

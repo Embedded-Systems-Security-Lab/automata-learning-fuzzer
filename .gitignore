@@ -48,3 +48,9 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Environment Variables
+env/
+__pycache__/
+iec104_pj/
+# Netzob folder
+netzob/
