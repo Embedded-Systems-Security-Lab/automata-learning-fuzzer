@@ -40,7 +40,7 @@ You now have a working instrumentation, next step is to compile the test harness
 cd examples/cs104_server_no_threads
 make -j<N CPU>
 ```
-This gives a compiled server example
+This gives a compiled server example, we have a precombined server in the FMI/c_SUT folder.
 ## Usage
 
 ```bash
