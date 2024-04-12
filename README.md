@@ -22,9 +22,9 @@ cd ../..                                # Move to the top tree folder
 pip install -r requirements.txt         # Install other libraries
 ```
 You should have a working version of both afl++ and MCFICS
-We need to compile the [lib60870](https://github.com/mz-automation/lib60870) which is located in the IEC104 folder
+We need to compile the [lib60870](https://github.com/mz-automation/lib60870) which you can clone to any repo path
 ```bash
-cd IEC104/lib60870/lib60870-C/
+cd <path-to-the-lib>/lib60870/lib60870-C/
 ```
 **Prepare Instrumentation**
 We will replace the C compiler with AFL++ toolchain compiler, you can use afl-clang, afl-clang-fast, afl-gcc or afl-gcc-fast to compile the code
